@@ -14,12 +14,15 @@ class DictNamesShorter:
         self.alias = self.aliases()
 
     def aliases(self):
-        from itertools import chain
-        l1_aliases = (a for a in 'abcdefghijklmnopqrstuvwxwzABCDEFGHIJKLMNOPQRSTUVWXWZ0123456789')
-        l2_aliases = (a+b for a in l1_aliases for b in l1_aliases)
-        l3_aliases = (a+b for a in l2_aliases for b in l1_aliases)
-        l4_aliases = (a+b for a in l2_aliases for b in l2_aliases)
-        for alias in chain(l1_aliases, l2_aliases, l3_aliases, l4_aliases):
+        from itertools import chain, tee
+        from copy import copy
+        available = 'abcdefghijklmnopqrstuvwxwzABCDEFGHIJKLMNOPQRSTUVWXWZ0123456789'
+        l1_aliases = (a for a in available)
+        l2_aliases = (a+b for a in available for b in available)
+        l3_aliases = (a+b+c for a in available for b in available for c in available)
+        l4_aliases = (a+b+c+d for a in available for b in available for c in available for d in available)
+        l5_aliases = (a+b+c+d+e for a in available for b in available for c in available for d in available for e in available)
+        for alias in chain(l1_aliases, l2_aliases, l3_aliases, l4_aliases, l5_aliases):
             yield alias
 
     def walk(self, doc):
@@ -29,12 +32,14 @@ class DictNamesShorter:
                 if key not in self.short_keys:
                     try:
                         new_key = self.alias.next()
+                        self.short_keys[key] = new_key
                     except StopIteration:
                         raise RuntimeError('Too many keys for shorting, sorry')
-                self.short_keys[key] = new_key
-
+                
                 if type(item) in (tuple, list, dict):
                     item = self.walk(item)
+
+                new_key = self.short_keys[key]
                 new_dict[new_key] = item
             return new_dict
 
@@ -58,10 +63,13 @@ class DictNamesShorter:
 if __name__ == '__main__':
     import json
 
-    d = {'text': 'Text', 'items': (1, 2, 3), 'obj': ({'item1': 1, 'item2': 2}, {'item3': 3})}
-    print(len(json.dumps(d)))
+    with open('example.json') as f:
+        d = json.load(f)
+
+    print(len(json.dumps(d)))  # 9327
 
     shorter = DictNamesShorter()
-    d, n = shorter.short(d)
-    print(d, n)
-    print(len(json.dumps(d)))
+    shorten_dict, replaced_names = shorter.short(d)
+    shorten_json_len = len(json.dumps(shorten_dict))  # 5682
+    replaced_json_len = len(json.dumps(replaced_names))  # 1586
+    print(shorten_json_len + replaced_json_len)  # 7268
