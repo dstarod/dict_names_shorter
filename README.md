@@ -1,0 +1,1 @@
+Python class for shorting long key names. Returns new dict with replaced keys and dict with pairs "new key" : "old key". Useful for sending big JSONs by net.
