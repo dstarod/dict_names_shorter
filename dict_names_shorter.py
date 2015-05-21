@@ -30,6 +30,7 @@ class DictNamesShorter:
             new_dict = {}
             for key, item in doc.items():
                 if key not in self.short_keys:
+
                     try:
                         new_key = self.alias.next()
                         self.short_keys[key] = new_key
@@ -54,8 +55,9 @@ class DictNamesShorter:
         else:
             return doc
 
-    def short(self, doc):
-        doc = self.walk(doc)
+    def modify(self, doc, replace_map={}):
+        self.short_keys = replace_map
+        doc = self.walk(doc)        
         new_dict = dict(zip(self.short_keys.values(), self.short_keys.keys()))
         return doc, new_dict
 
@@ -69,7 +71,13 @@ if __name__ == '__main__':
     print(len(json.dumps(d)))  # 9327
 
     shorter = DictNamesShorter()
-    shorten_dict, replaced_names = shorter.short(d)
+
+    shorten_dict, replaced_names = shorter.modify(d)    
+    print(shorten_dict)
+
     shorten_json_len = len(json.dumps(shorten_dict))  # 5682
     replaced_json_len = len(json.dumps(replaced_names))  # 1586
     print(shorten_json_len + replaced_json_len)  # 7268
+
+    restored_dict, replaced_names = shorter.modify(shorten_dict, replaced_names)
+    print(restored_dict)
